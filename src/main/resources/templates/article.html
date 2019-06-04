@@ -7,8 +7,13 @@
 <body>
 <h2>掲示板アプリケーション</h2>
 <form th:action="@{/article/insert-article}"
-           method="post">
+           method="post"
+           th:object="${articleForm}">
+<div th:if="${#fields.hasErrors('name')}"
+         th:errors="*{name}" style="color:red"></div>
 投稿者名：<input type="text" name="name"><br>
+<div th:if="${#fields.hasErrors('content')}"
+         th:errors="*{content}" style="color:red"></div>
 投稿内容：<textarea rows="2" cols="20" 
                   name="content"></textarea><br>
 <button>記事投稿</button>
@@ -29,10 +34,15 @@
 コメント内容：<span th:text="${comment.content}"></span><br>
 </p>
 <form th:action="@{article/insert-comment}"
+　　　　　th:object="${commentForm}"
            method="post">
 <input type="hidden" name="articleId"
                       th:value="${article.id}">
+<div th:if="${#fields.hasErrors('name')} AND ${selectedId} == ${article.id}"
+         th:errors="*{name}" style="color:red"></div>
 名前：<input type="text" name="name"><br>
+<div th:if="${#fields.hasErrors('content')} AND ${selectedId} == ${article.id}"
+         th:errors="*{content}" style="color:red"></div>
 コメント：<textarea rows="2" cols="20"
                name="content"></textarea><br>
 <button>コメント投稿</button>

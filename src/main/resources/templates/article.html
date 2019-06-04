@@ -23,7 +23,7 @@
 投稿ID：<span th:text="${article.id}"></span><br>
 投稿者名：<span th:text="${article.name}"></span><br>
 投稿内容：<span th:text="${article.content}"></span><br>
-<form th:action="@{article/delete-article}"
+<form th:action="@{/article/delete-article}"
            method="post">
 <input type="hidden" name="id" th:value="${article.id}">           
 <button>記事削除</button>
@@ -33,18 +33,21 @@
 コメント者名：<span th:text="${comment.name}"></span><br>
 コメント内容：<span th:text="${comment.content}"></span><br>
 </p>
-<form th:action="@{article/insert-comment}"
-　　　　　th:object="${commentForm}"
-           method="post">
+<form th:action="@{/article/insert-comment}" th:object="${commentForm}" method="post">
 <input type="hidden" name="articleId"
                       th:value="${article.id}">
-<div th:if="${#fields.hasErrors('name')} AND ${selectedId} == ${article.id}"
+<div th:if="${#fields.hasErrors('name')} AND ${commentForm.articleId} == ${article.id}"
          th:errors="*{name}" style="color:red"></div>
-名前：<input type="text" name="name"><br>
+名前：<input type="text" name="name"
+                     th:if="${selectedId} == ${article.id}" th:field="*{name}">
+          <input type="text" name="name"
+                     th:unless="${selectedId} == ${article.id}" ><br>
 <div th:if="${#fields.hasErrors('content')} AND ${selectedId} == ${article.id}"
          th:errors="*{content}" style="color:red"></div>
-コメント：<textarea rows="2" cols="20"
-               name="content"></textarea><br>
+コメント：<textarea rows="2" cols="20" name="content"
+                            th:if="${selectedId} == ${article.id}" th:field="*{content}"></textarea>
+             <textarea rows="2" cols="20" name="content"
+                            th:unless="${selectedId} == ${article.id}" ></textarea><br>
 <button>コメント投稿</button>
 </form>
 <hr>

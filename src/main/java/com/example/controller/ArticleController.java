@@ -68,7 +68,7 @@ public class ArticleController {
 	 */
 	@RequestMapping("/1-time-sql")
 	public String index2(Model model) {
-		List<Article> articleList = articleRepository.findAll2();
+		List<Article> articleList = articleRepository.findAll();
 		model.addAttribute("articleList", articleList);
 		return "article";
 	}
@@ -117,8 +117,9 @@ public class ArticleController {
 	@RequestMapping("/delete-article")
 	public String deleteArticle(int id) {
 		System.out.println(id);
-		commentRepository.delete(id);
-		articleRepository.deleteById(id);
+		articleRepository.deleteById1TimeSQL(id);
+//		commentRepository.delete(id);
+//		articleRepository.deleteById(id);
 		return "redirect:/article";
 	}
 	

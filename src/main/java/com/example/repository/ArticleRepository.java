@@ -1,11 +1,7 @@
 package com.example.repository;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -40,25 +36,25 @@ public class ArticleRepository {
 		return article;
 	};
 
-	private static final RowMapper<Article> ARTICLE_ROW_MAPPER2 = (rs, i) -> {
-		Article article = new Article();
-
-		article.setId(rs.getInt("id"));
-		article.setName(rs.getString("name"));
-		article.setContent(rs.getString("content"));
-		Comment comment = new Comment();
-		comment.setId(rs.getInt("c_id"));
-		comment.setName(rs.getString("c_name"));
-		comment.setContent(rs.getString("c_content"));
-		comment.setArticleId(rs.getInt("id"));
-		List<Comment> commentList = new ArrayList<>();
-		commentList.add(comment);
-		if (comment.getName() == null) {
-			commentList = null;
-		}
-		article.setCommentList(commentList);
-		return article;
-	};
+//	private static final RowMapper<Article> ARTICLE_ROW_MAPPER2 = (rs, i) -> {
+//		Article article = new Article();
+//
+//		article.setId(rs.getInt("id"));
+//		article.setName(rs.getString("name"));
+//		article.setContent(rs.getString("content"));
+//		Comment comment = new Comment();
+//		comment.setId(rs.getInt("c_id"));
+//		comment.setName(rs.getString("c_name"));
+//		comment.setContent(rs.getString("c_content"));
+//		comment.setArticleId(rs.getInt("id"));
+//		List<Comment> commentList = new ArrayList<>();
+//		commentList.add(comment);
+//		if (comment.getName() == null) {
+//			commentList = null;
+//		}
+//		article.setCommentList(commentList);
+//		return article;
+//	};
 
 	private static final ResultSetExtractor<List<Article>> ARTICLE_RESULT_SET_EXTRACTOR = (rs) -> {
 		List<Article> articleList = new LinkedList<>();
@@ -107,38 +103,38 @@ public class ArticleRepository {
 	 * 
 	 * @return 投稿されているすべての記事
 	 */
-	public List<Article> findAll() {
-		// ArticleのcommentListに一つずつcomment を入れて、List<Article>を取得
-		String sql = "select a.id as id,a.name as name,a.content as content,c.id as c_id,c.name as c_name,c.content as c_content from "
-				+ tableName + " a full join comments c on a.id=c.article_id order by a.id desc,c.id desc";
-		List<Article> articleListNotCommentList = template.query(sql, ARTICLE_ROW_MAPPER2);
-		// 記事IDをLinkedHashMapのキーとして、同じキーのcommentListをまとめる
-		Map<Integer, Article> articleMap = new LinkedHashMap<>();
-		for (Article article : articleListNotCommentList) {
-			if (articleMap.get(article.getId()) == null) {
-				articleMap.put(article.getId(), article);
-			} else {
-				List<Comment> commentList = articleMap.get(article.getId()).getCommentList();
-				commentList.add(article.getCommentList().get(0));
-				article.setCommentList(commentList);
-				articleMap.put(article.getId(), article);
-			}
-		}
-		// LinkedHashMapからarticleListを生成
-		Set<Integer> set = articleMap.keySet();
-		List<Article> articleList = new LinkedList<Article>();
-		for (Integer id : set) {
-			articleList.add(articleMap.get(id));
-		}
-		return articleList;
-	}
+//	public List<Article> findAll() {
+//		// ArticleのcommentListに一つずつcomment を入れて、List<Article>を取得
+//		String sql = "select a.id as id,a.name as name,a.content as content,c.id as c_id,c.name as c_name,c.content as c_content from "
+//				+ tableName + " a full join comments c on a.id=c.article_id order by a.id desc,c.id desc";
+//		List<Article> articleListNotCommentList = template.query(sql, ARTICLE_ROW_MAPPER2);
+//		// 記事IDをLinkedHashMapのキーとして、同じキーのcommentListをまとめる
+//		Map<Integer, Article> articleMap = new LinkedHashMap<>();
+//		for (Article article : articleListNotCommentList) {
+//			if (articleMap.get(article.getId()) == null) {
+//				articleMap.put(article.getId(), article);
+//			} else {
+//				List<Comment> commentList = articleMap.get(article.getId()).getCommentList();
+//				commentList.add(article.getCommentList().get(0));
+//				article.setCommentList(commentList);
+//				articleMap.put(article.getId(), article);
+//			}
+//		}
+//		// LinkedHashMapからarticleListを生成
+//		Set<Integer> set = articleMap.keySet();
+//		List<Article> articleList = new LinkedList<Article>();
+//		for (Integer id : set) {
+//			articleList.add(articleMap.get(id));
+//		}
+//		return articleList;
+//	}
 
 	/**
 	 * 投稿されているすべての記事を表示する(一つのSQL文で).
 	 * 
 	 * @return 投稿されているすべての記事
 	 */
-	public List<Article> findAll2() {
+	public List<Article> findAll() {
 		// ArticleのcommentListに一つずつcomment を入れて、List<Article>を取得
 		String sql = "select a.id as id,a.name as name,a.content as content,c.id as c_id,c.name as c_name,c.content as c_content from "
 				+ tableName + " a full join comments c on a.id=c.article_id order by a.id desc,c.id desc";
@@ -164,6 +160,21 @@ public class ArticleRepository {
 	 */
 	public void deleteById(int id) {
 		String sql = "delete from " + tableName + " where id=:id";
+		SqlParameterSource param = new MapSqlParameterSource().addValue("id", id);
+		template.update(sql, param);
+	}
+	
+	/**
+	 * 一つのSQL文に渡された記事IDの投稿をarticlesテーブルから削除する.
+	 * 
+	 * @param id 記事ID
+	 */
+	public void deleteById1TimeSQL(int id) {
+		String sql = "WITH deleted AS " + 
+				"(DELETE FROM "+tableName+" WHERE id =:id" + 
+				" RETURNING id)" + 
+				" DELETE FROM comments " + 
+				" WHERE article_id IN (SELECT id FROM deleted)";
 		SqlParameterSource param = new MapSqlParameterSource().addValue("id", id);
 		template.update(sql, param);
 	}
